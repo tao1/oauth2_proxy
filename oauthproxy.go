@@ -89,9 +89,16 @@ func (u *UpstreamProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	u.handler.ServeHTTP(w, r)
 }
 
-func NewReverseProxy(target *url.URL) (proxy *httputil.ReverseProxy) {
-	return httputil.NewSingleHostReverseProxy(target)
+func NewReverseProxy(target *url.URL, passHostHeader bool) (proxy *httputil.ReverseProxy) {
+	proxy = httputil.NewSingleHostReverseProxy(target)
+ 	if !passHostHeader {
+ 		setProxyUpstreamHostHeader(proxy, target)
+ 	} else {
+ 		setProxyDirector(proxy)
+ 	}
+	return proxy
 }
+
 func setProxyUpstreamHostHeader(proxy *httputil.ReverseProxy, target *url.URL) {
 	director := proxy.Director
 	proxy.Director = func(req *http.Request) {
@@ -128,12 +135,7 @@ func NewOAuthProxy(opts *Options, validator func(string) bool) *OAuthProxy {
 		case "http", "https":
 			u.Path = ""
 			log.Printf("mapping path %q => upstream %q", path, u)
-			proxy := NewReverseProxy(u)
-			if !opts.PassHostHeader {
-				setProxyUpstreamHostHeader(proxy, u)
-			} else {
-				setProxyDirector(proxy)
-			}
+			proxy := NewReverseProxy(u, opts.PassHostHeader)
 			serveMux.Handle(path,
 				&UpstreamProxy{u.Host, proxy, auth})
 		case "file":
@@ -143,6 +145,11 @@ func NewOAuthProxy(opts *Options, validator func(string) bool) *OAuthProxy {
 			log.Printf("mapping path %q => file system %q", path, u.Path)
 			proxy := NewFileServer(path, u.Path)
 			serveMux.Handle(path, &UpstreamProxy{path, proxy, nil})
+		case "ws", "wss":
+			u.Path = ""
+			log.Printf("mapping web sockets %q => upstream %q", path, u)
+			proxy := NewReverseProxy(u, opts.PassHostHeader)
+			serveMux.Handle(path, &WebsocketReverseProxy{u.Host, proxy})
 		default:
 			panic(fmt.Sprintf("unknown upstream protocol %s", u.Scheme))
 		}

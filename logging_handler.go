@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"text/template"
 	"time"
+	"bufio"
+	"errors"
 )
 
 const (
@@ -92,6 +94,16 @@ type loggingHandler struct {
 	handler     http.Handler
 	enabled     bool
 	logTemplate *template.Template
+}
+
+func (l *responseLogger) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	highjacker, ok := l.w.(http.Hijacker)
+
+	if !ok {
+		return nil, nil, errors.New("webserver doesn't support hijacking")
+	}
+
+	return highjacker.Hijack()
 }
 
 func LoggingHandler(out io.Writer, h http.Handler, v bool, requestLoggingTpl string) http.Handler {
