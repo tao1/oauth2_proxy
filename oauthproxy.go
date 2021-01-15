@@ -91,11 +91,11 @@ func (u *UpstreamProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func NewReverseProxy(target *url.URL, passHostHeader bool) (proxy *httputil.ReverseProxy) {
 	proxy = httputil.NewSingleHostReverseProxy(target)
- 	if !passHostHeader {
- 		setProxyUpstreamHostHeader(proxy, target)
- 	} else {
- 		setProxyDirector(proxy)
- 	}
+	if !passHostHeader {
+		setProxyUpstreamHostHeader(proxy, target)
+	} else {
+		setProxyDirector(proxy)
+	}
 	return proxy
 }
 

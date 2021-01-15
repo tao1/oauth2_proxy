@@ -16,6 +16,10 @@
   version = "~0.5.0"
 
 [[constraint]]
+  name = "github.com/bitly/oauth2_proxy"
+  branch = "master"
+
+[[constraint]]
   branch = "v2"
   name = "github.com/coreos/go-oidc"
 
