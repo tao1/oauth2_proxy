@@ -14,7 +14,13 @@ func (a *StringArray) Set(s string) error {
 func (a *StringArray) Get() interface{} {
 	var s string
 	for _, v := range *a {
+<<<<<<< HEAD
 		s += v
+=======
+		if v != "" {
+			s += v
+		}
+>>>>>>> f2baac60436f8ea6d02c3291f5ddd372c14f6437
 	}
 	if s != "" {
 		return s
